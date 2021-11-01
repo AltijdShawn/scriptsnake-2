@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1 # v1 keeps tags
+        with:
+          fetch-depth: 100 # for `action-helper`
+          # persist-credentials: false # not implemented in v1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+      - name: Prepare
+        run: yarn && node scripts/action-helper.js
+      - name: Build
+        run: |
+          yarn build
+          mkdir -p $ASSETS_DIR $TEMP_DIR
+          cd dist && zip -r ../$ASSETS_DIR/$ASSET_ZIP . && cd ..
+
+          # Same as `yarn build:selfHosted` but only manifest is changed for now
+          TARGET=selfHosted BETA=1 npx gulp manifest
+          cd dist && zip -r ../$TEMP_DIR/$ASSET_SELF_HOSTED_ZIP . && cd ..
+      - name: AMO Beta
+        id: signAMO
+        continue-on-error: true
+        run: |
+          mkdir -p $TEMP_DIR/updates
+          node scripts/amo-sign
+        env:
+          AMO_KEY: ${{ secrets.AMO_KEY }}
+          AMO_SECRET: ${{ secrets.AMO_SECRET }}
+          BETA: 1
+      - name: Update updates.json
+        uses: JamesIves/github-pages-deploy-action@4.1.0
+        if: steps.signAMO.outcome == 'success'
+        with:
+          branch: updates
+          folder: ${{ env.TEMP_DIR }}/updates
+          commit-message: Update to ${{ env.VERSION }} 🚀
+      - name: CWS Beta
+        continue-on-error: true
+        run: |
+          npx chrome-webstore-upload-cli@1 upload --extension-id $EXTENSION_ID_BETA --source $ASSETS_DIR/$ASSET_ZIP --auto-publish
+        env:
+          EXTENSION_ID_BETA: opokoaglpekkimldnlggpoagmjegichg
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x
+          params=("-m" "$RELEASE_NAME" "-m" "$RELEASE_NOTE")
+          if [ "$PRERELEASE" = "true" ]; then
+            params+=("-p")
+          fi
+          for asset in $ASSETS_DIR/*; do
+            params+=("-a" "$asset")
+          done
+          hub release create "${params[@]}" v$VERSION

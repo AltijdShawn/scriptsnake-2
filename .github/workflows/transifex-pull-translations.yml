@@ -1,0 +1,35 @@
+name: Download translations from Transifex
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 1'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: '15'
+      - name: Install deps
+        run: yarn
+      - name: Update translations
+        run: node scripts/transifex pull
+        env:
+          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: i18n-patch
+          commit-message: Update locale files from Transifex
+          title: Update locale files from Transifex
+          body: >-
+            scriptsnake updates translations from Transifex every week automatically.
+
+            If you want to help translate into your language, please visit [the transifex platform](https://www.transifex.com/projects/p/scriptsnake-nex/resource/messagesjson/).

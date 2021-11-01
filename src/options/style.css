@@ -1,0 +1,149 @@
+$compactHeaderHeight: 3rem;
+
+html,
+body {
+  height: 100%;
+}
+aside {
+  position: relative;
+  z-index: 1000;
+}
+.aside-content {
+  width: 14rem;
+  height: 100%;
+  padding: 4rem 1rem 0;
+  text-align: right;
+  border: solid var(--fill-5);
+  border-width: 0 1px 0 0;
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--fill-3);
+  }
+  background: var(--fill-0-5);
+  img {
+    width: 5rem;
+    height: 5rem;
+  }
+}
+.aside-menu {
+  border-top: 1px solid var(--fill-4);
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--fill-3);
+  }
+  > a {
+    display: block;
+    padding-top: .6rem;
+    padding-bottom: .6rem;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--fill-8);
+    &.active,
+    &:hover {
+      color: var(--fg);
+    }
+  }
+  [data-num-scripts]::before {
+    content: '(' attr(data-num-scripts) ') ';
+  }
+}
+.text-red {
+  color: red;
+}
+.text-right {
+  text-align: right;
+}
+section {
+  position: relative;
+  margin-top: 2rem;
+  padding: 1.2rem .8rem .8rem;
+  border: none;
+  border-top: 1px solid var(--fill-4);
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--fill-3);
+  }
+  > h3 {
+    position: absolute;
+    margin: 0;
+    padding: 0 .2rem;
+    top: -.6em;
+    left: .8rem;
+    line-height: 1;
+    background: var(--bg);
+  }
+  > h4 {
+    margin-bottom: .3rem;
+  }
+  > p {
+    margin-bottom: .3rem;
+  }
+}
+
+.tab {
+  position: relative;
+  padding: 1.2rem;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.vl-modal {
+  z-index: 3000;
+}
+
+.in-out {
+  &-appear,
+  &-enter,
+  &-leave-active {
+    > .modal-content {
+      transform: translateY(-120%);
+    }
+    > .vl-modal-backdrop {
+      opacity: 0;
+    }
+  }
+  &-appear-active,
+  &-enter-active,
+  &-leave-active {
+    &,
+    > .modal-content {
+      transition: transform .5s;
+    }
+    > .vl-modal-backdrop {
+      transition: opacity .5s;
+    }
+  }
+}
+
+@media (max-width: 767px) {
+  .page-options {
+    flex-direction: column;
+  }
+  .tab {
+    width: auto !important;
+  }
+  .aside-content {
+    display: flex;
+    width: auto;
+    height: $compactHeaderHeight;
+    padding: 0;
+    border-width: 0 0 1px 0;
+    img {
+      width: $compactHeaderHeight;
+      height: $compactHeaderHeight;
+      margin: 0 .5rem 0 1.25rem;
+    }
+    h1 {
+      align-self: center;
+      font-size: 1.25rem;
+      margin: 0;
+    }
+  }
+  .aside-menu {
+    display: flex;
+    border: none;
+    a {
+      padding: 0 0 0 1.5rem;
+      display: flex;
+      flex-direction: column; /* stretch to full height... */
+      justify-content: center; /* ...and center vertically */
+    }
+  }
+}

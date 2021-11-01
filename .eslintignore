@@ -1,0 +1,10 @@
+**/*.js
+!src/**
+!test/**
+!scripts/fake-dep-loader.js
+!scripts/manifest-helper.js
+!scripts/plaid.conf.js
+!scripts/webpack.conf.js
+!scripts/webpack-protect-bootstrap-plugin.js
+!gulpfile.js
+src/public/**

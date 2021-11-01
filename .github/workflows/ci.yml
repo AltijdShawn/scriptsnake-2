@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+    tags-ignore:
+      - v* # version-tagged commits are releases which have their own workflow
+    paths-ignore:
+      - '.github/**' # this ci.yml is also excluded so you need to re-run it explicitly if necessary
+      - LICENSE
+      - README.md
+  pull_request:
+    branches: [master]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2 # for the `has-changed-path` action
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '15'
+
+      - name: Build
+        run: yarn && yarn build
+
+      - name: Upload Artifact - get version
+        uses: nyaa8/package-version@v1
+      - name: Upload Artifact - get short SHA
+        uses: benjlevesque/short-sha@v1.2
+        id: short-sha
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: 'scriptsnake-test-webext-v${{ env.PACKAGE_VERSION }}-git${{ steps.short-sha.outputs.sha }}'
+          path: 'dist/*'
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload to Transifex - check src
+        uses: marceloprado/has-changed-path@v1
+        id: changed-path-src
+        with:
+          paths: src
+      - name: Upload to Transifex
+        if: steps.changed-path-src.outputs.changed == 'true'
+        run: 'curl -i -L --user api:$TRANSIFEX_TOKEN -X PUT -F file=@dist/_locales/en/messages.json https://www.transifex.com/api/2/project/scriptsnake-nex/resource/messagesjson/content/'
+        env:
+          TRANSIFEX_TOKEN: ${{ secrets.TRANSIFEX_TOKEN }}
